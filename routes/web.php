@@ -30,8 +30,12 @@ Route::get('/', function () {
 //     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 // });
 
+require __DIR__.'/auth.php';
+
 Route::get('/{vue_capture}', function () {
-    return Inertia::render('Dashboard');
+    return view('app', ['page' => [
+        'component' => 'Dashboard'
+    ]]);
 })->where('vue_capture', '[\/\w\.-]*')->middleware(['auth']);
 
-require __DIR__.'/auth.php';
+

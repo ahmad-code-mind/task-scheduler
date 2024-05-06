@@ -15,11 +15,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::prefix('task')->group(function () {
-        Route::get('get', [TaskController::class, 'get']);
-        Route::post('create', [TaskController::class, 'store']);
-        Route::post('update', [TaskController::class, 'update']);
-        Route::post('delete', [TaskController::class, 'delete']);
-    });
+Route::prefix('task')->group(function () {
+    Route::get('get', [TaskController::class, 'get']);
+    Route::post('create', [TaskController::class, 'store']);
+    Route::post('update', [TaskController::class, 'update']);
+    Route::post('delete', [TaskController::class, 'delete']);
 });

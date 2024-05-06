@@ -1,11 +1,11 @@
 <template>
-  <div v-if="shouldShowAddNewButton" class="cursor-pointer">
-    <router-link class="btn-primary text-white font-semibold btn-hover uppercase text-xs px-4 py-2 rounded float-end" :to="{ name: 'createTask' }">
+  <div v-if="shouldShowAddNewButton" class="cursor-pointer float-end py-5">
+    <router-link class="btn-primary text-white font-semibold btn-hover uppercase text-xs px-4 py-2 rounded" :to="{ name: 'createTask' }">
       <i class="fas fa-plus mr-2"></i>
       <span>Add New</span>
     </router-link>
   </div>
-  <div class="bg-white">
+  <div class="">
     <router-view />
   </div>
 </template>

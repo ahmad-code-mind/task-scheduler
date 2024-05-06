@@ -1,5 +1,5 @@
 /* PREFIX */
-const task = "task";
+const task = "task/";
 
 const api = {
   task_scheduler: {

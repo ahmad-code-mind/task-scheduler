@@ -27,12 +27,26 @@
                 <form-error :validationErrors="getTaskValidationError" name="description" />
               </div>
             </div>
-  
-            <!-- Image -->
+
+            <!-- Due Date -->
             <div class="w-full px-4">
-              <div class="relative w-full mb-5">
-                <label class="block uppercase text-blueGray-600 text-xs font-bold mb-2" for="image">Image</label>
-                <input type="file" name="image" :class="commonInputClass" required>
+              <div class="relative w-full mb-3">
+                <label class="block uppercase text-blueGray-600 text-xs font-bold mb-2" for="due_date">Due Date</label>
+                <input type="datetime-local" :min="currentDateTime" id="title" name="title" :class="commonInputClass">
+                <form-error :validationErrors="getTaskValidationError" name="due_date" />
+              </div>
+            </div>
+  
+            <!-- Priority -->
+            <div class="w-full px-4">
+              <div class="relative w-full mb-3">
+                <label class="block uppercase text-blueGray-600 text-xs font-bold mb-2" for="priority">Priority</label>
+                <select name="priority" id="priority" :class="commonInputClass">
+                  <option value="1">Low</option>
+                  <option value="2">Medium</option>
+                  <option value="3">High</option>
+                </select>
+                <form-error :validationErrors="getUserValidationError" name="priority" />
               </div>
             </div>
   
@@ -67,6 +81,7 @@
     data() {    
       return {
         title: "Create Task",
+        currentDateTime: new Date().toISOString().slice(0, 16),
         commonInputClass: 'border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150',
       }
     },

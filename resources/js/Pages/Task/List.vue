@@ -1,5 +1,5 @@
 <template>
-    <div class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded">
+    <div class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded bg-white">
       <DataTableHeader title="Task List" @search="handleSearch" />
       <div class="block w-full overflow-x-auto">
         <table class="items-center w-full bg-transparent border-collapse">

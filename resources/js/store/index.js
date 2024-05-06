@@ -3,6 +3,7 @@ import api from "@/apis";
 import config from "@/config";
 import { getApiHeader } from '@/utils/ApiHeader';
 import { sendRequest } from '@/utils/SendRequest';
+import { createEndpoint, fetchData } from "@/utils/FilterData";
 
 export default createStore({
     state: {
@@ -78,7 +79,7 @@ export default createStore({
         async getTask({ commit }, { TaskId, module }) {
           try {
             commit("SET_CONTENT_LOADING", true);
-            commit("SET_Task_TO_EDIT", {});
+            commit("SET_TASK_TO_EDIT", {});
             
             const url = config.API_BASE_URL + api.task_scheduler.get.endpoint;
             let endpoint = url;
@@ -97,13 +98,13 @@ export default createStore({
               headers: getApiHeader(),
             };
             const response = await fetch(endpoint, requestOptions);
-            const responseBody = await handleResponse(response);
+            const responseBody = await response.json();
             if (responseBody.status === 200) {
               commit("SET_CONTENT_LOADING", false);
               if (TaskId) {
-                commit("SET_Task_TO_EDIT", responseBody.data);
+                commit("SET_TASK_TO_EDIT", responseBody.data);
               } else {
-                commit("SET_ALL_Tasks", responseBody.data.Tasks);
+                commit("SET_ALL_TASKS", responseBody.data.Tasks);
               }
             } else {
               commit("SET_CONTENT_LOADING", false);
@@ -111,22 +112,21 @@ export default createStore({
             }
           } catch (error) {
             commit("SET_CONTENT_LOADING", false);
-            console.error('Error fetching profiles:', error.message);
+            console.error('Error fetching task:', error.message);
           }
         },
         /* FILTER TASK */
         async filterTask({ commit }, data) {
           try {
-            const showLoader = data.search === '';
-            const url = createEndpoint(data, api.task_scheduler.get.endpoint, showLoader);
-            const responseData = await fetchData(commit, url, api.task_scheduler.get.method, showLoader);
+            const url = createEndpoint(data, api.task_scheduler.get.endpoint);
+            const responseData = await fetchData(commit, url, api.task_scheduler.get.method);
             
             if (responseData) {
               commit("SET_EXTRA_PAGINATED_DATA", responseData.Tasks);
-              commit("SET_ALL_PAGINATED_Tasks", responseData.Tasks.data);
+              commit("SET_ALL_PAGINATED_TASKS", responseData.Tasks.data);
             }
           } catch (error) {
-            console.error('Error fetching profiles:', error.message);
+            console.error('Error fetching task:', error.message);
           }
         },
         /* UPDATE TASK */
@@ -145,7 +145,7 @@ export default createStore({
                       body: JSON.stringify(data),
                   }
               );
-              const responseBody = await handleResponse(response);
+              const responseBody = await response.json();
               if (responseBody.status === 200) {
                   commit("SET_SUCCESS", true);
                   successToast(responseBody.message);
@@ -155,7 +155,7 @@ export default createStore({
               }
           } catch (error) {
               commit("SET_SUCCESS", false);
-              console.error('Error deleting Task:', error.message);
+              console.error('Error deleting task:', error.message);
           }
         },
         /* CLEAN UP */
