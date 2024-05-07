@@ -33,9 +33,7 @@ Route::get('/', function () {
 require __DIR__.'/auth.php';
 
 Route::get('/{vue_capture}', function () {
-    return view('app', ['page' => [
-        'component' => 'Dashboard'
-    ]]);
+    return Inertia::render('Dashboard');
 })->where('vue_capture', '[\/\w\.-]*')->middleware(['auth']);
 
 

@@ -9,6 +9,7 @@
       </div>
       <div class="flex-auto px-2 mt-5">
         <form @submit.prevent="handleCreateTask" ref="createTask">
+          <input type="hidden" name="user_id" v-model="userId">
           <div class="flex flex-wrap">
             <!-- Title -->
             <div class="w-full px-4">
@@ -32,7 +33,7 @@
             <div class="w-full px-4">
               <div class="relative w-full mb-3">
                 <label class="block uppercase text-blueGray-600 text-xs font-bold mb-2" for="due_date">Due Date</label>
-                <input type="datetime-local" :min="currentDateTime" id="title" name="title" :class="commonInputClass">
+                <input type="datetime-local" :min="currentDateTime" id="due_date" name="due_date" :class="commonInputClass">
                 <form-error :validationErrors="getTaskValidationError" name="due_date" />
               </div>
             </div>
@@ -90,6 +91,9 @@
       isLoading() {
         return this.$store.state.isLoading;
       },
+      userId() {
+        return this.$page.props.auth.user.id
+      }
     },
     created() {
       this.$store.dispatch('taskCleanUp');
@@ -100,10 +104,8 @@
         try {
           e.preventDefault();
           var data = serializeForm(this.$refs.createTask);
-          await this.createTask({
-            TaskData: data,
-          });
-          const success = this.$store.state.Task.isSuccess;
+          await this.createTask(data);
+          const success = this.$store.state.isSuccess;
           if (success) {
               this.$router.push({ name: "taskList" });
           }

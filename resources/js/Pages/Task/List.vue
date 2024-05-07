@@ -1,6 +1,6 @@
 <template>
     <div class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded bg-white">
-      <DataTableHeader title="Task List" @search="handleSearch" />
+      <DataTableHeader title="Task List" @search="handleSearch" @filter="handleFilter" />
       <div class="block w-full overflow-x-auto">
         <table class="items-center w-full bg-transparent border-collapse">
           <thead>
@@ -10,16 +10,19 @@
               </th>
             </tr>
           </thead>
-          <tbody v-if="getAllPaginatedTasks && getAllPaginatedTasks.length != 0">
-            <tr v-for="(Task, index) in Object.values(getAllPaginatedTasks)" :key="Task.id">
+          <tbody v-if="formattedTasks && formattedTasks.length != 0">
+            <tr v-for="(task, index) in Object.values(formattedTasks)" :key="task.id">
               <td :class="bodyCommonClass">{{ index + 1 }}</td>
-              <td :class="bodyCommonClass">{{ Task.title }}</td>
+              <td :class="bodyCommonClass">{{ task.title }}</td>
+              <td :class="bodyCommonClass">{{ task.formattedDueDate }}</td>
+              <td :class="bodyCommonClass">{{ task.remainingTime.days }} days, {{ task.remainingTime.hours }} hours, {{ task.remainingTime.minutes }} minutes</td>
+              <td :class="bodyCommonClass">{{ task.priorityLabel  }}</td>
               <td>
                 <div class="flex" style="width: 200px">
-                  <router-link type="button" v-if="hasPermission('update_Task')" class="btn-primary text-white font-semibold btn-hover uppercase text-xs px-4 py-2 rounded mr-2" :to="{ name: 'TaskEdit', params: { id: Task.id } }">
+                  <router-link type="button" class="btn-primary text-white font-semibold btn-hover uppercase text-xs px-4 py-2 rounded mr-2" :to="{ name: 'editTask', params: { id: task.id } }">
                     <i class="fa fa-edit mr-1" aria-hidden="true"></i> Edit
                   </router-link>
-                  <button type="button" v-if="hasPermission('delete_Task')" class="btn-primary text-white font-semibold btn-hover uppercase text-xs px-4 py-2 rounded" @click="confirmDelete(Task.id)">
+                  <button type="button" class="btn-primary text-white font-semibold btn-hover uppercase text-xs px-4 py-2 rounded" @click="confirmDelete(task.id)">
                     <i class="fa fa-trash mr-1" aria-hidden="true"></i> Delete
                   </button>
                 </div>
@@ -58,6 +61,7 @@ import DataTableFooter from '@/Components/DataTableFooter.vue';
     mixins: [PaginationStatesMixin],
     data() {
       return {
+        user_id: null,
         headerCommonClass: 'px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-nowrap font-semibold text-left',
         bodyCommonClass: 'border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4',
         headers: [],
@@ -69,11 +73,14 @@ import DataTableFooter from '@/Components/DataTableFooter.vue';
         { text: '#', class: this.headerCommonClass },
         { text: 'Title', class: this.headerCommonClass },
         { text: 'Due Date', class: this.headerCommonClass },
+        { text: 'Remaining Time', class: this.headerCommonClass },
+        { text: 'Priority', class: this.headerCommonClass },
         { text: 'Action', class: this.headerCommonClass }
       ];
     },
     mounted() {
-        this.fetchTasks();
+      this.user_id = this.$page.props.auth.user.id
+      this.fetchTasks();
     },
     watch: {
       selectedPageSize() {
@@ -101,6 +108,28 @@ import DataTableFooter from '@/Components/DataTableFooter.vue';
             'bg-blueGray-800 text-blueGray-500 border-blueGray-700',
           ];
         });
+      },
+      formattedTasks() {
+        return this.getAllPaginatedTasks.map(task => {
+          const dueDate = new Date(task.due_date);
+          const formattedDueDate = this.formatDate(dueDate);
+          const remainingTime = this.calculateRemainingTime(dueDate);
+
+          return {
+            ...task,
+            formattedDueDate,
+            remainingTime,
+            priorityLabel: this.getPriorityLabel(task.priority)
+          };
+        });
+      },
+    },
+    watch: {
+      getAllPaginatedTasks: {
+        immediate: true,
+        handler() {
+          this.startTimer();
+        }
       }
     },
     methods: {
@@ -112,12 +141,14 @@ import DataTableFooter from '@/Components/DataTableFooter.vue';
       closeModal() {
         this.showModal = false;
       },
-      async fetchTasks(search = '') {
+      async fetchTasks(search = '', filter = 'all') {
         try {
           const data = {
             page: search !== '' ? this.currentPage = 1 : this.currentPage,
             per_page: this.selectedPageSize,
-            search: search
+            search: search,
+            filter: filter,
+            user_id: this.user_id
           }
           await this.filterTask(data);
         }
@@ -128,6 +159,9 @@ import DataTableFooter from '@/Components/DataTableFooter.vue';
       handleSearch(value) {
         this.fetchTasks(value);
       },
+      handleFilter(value) {
+        this.fetchTasks('', value);
+      },
       handleSelectedPageSize(value) {
         this.selectedPageSize = value;
       },
@@ -137,24 +171,22 @@ import DataTableFooter from '@/Components/DataTableFooter.vue';
         this.sortOrder = "asc";
         this.fetchTasks();
       },
-      async confirmDelete(TaskId) {
+      async confirmDelete(taskId) {
         try {
-          const result = await showWarningAlert('Are you sure?', 'Deleting this Task will also delete all related courses. Are you sure you want to proceed?', 'Yes, delete it!');
-          if (result.isConfirmed) {
-            this.handleDeleteTask(TaskId);
-          }
-          else {
-            showInfoAlert('Deletion canceled');
-          }
-        }
-        catch (error) {
-          console.error(error);
+            const result = window.confirm('Are you sure you want to proceed?');
+            if (result) {
+                this.handleDeleteTask(taskId);
+            } else {
+                window.alert('Deletion canceled');
+            }
+        } catch (error) {
+            console.error(error);
         }
       },
-      handleDeleteTask(TaskId) {
+      handleDeleteTask(taskId) {
         try {
             const data = {
-                id: TaskId,
+                id: taskId,
             };
             this.deleteTask(data);
             this.fetchTasks();
@@ -163,6 +195,46 @@ import DataTableFooter from '@/Components/DataTableFooter.vue';
             console.error('Error deleting Tasks:', error);
         }
       },
+      formatDate(date) {
+        const options = { 
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric'
+        };
+        return date.toLocaleDateString('en-US', options);
+      },
+      calculateRemainingTime(dueDate) {
+        const now = new Date();
+        const difference = dueDate.getTime() - now.getTime();
+
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        
+        return { days, hours, minutes };
+      },
+      startTimer() {
+        setInterval(() => {
+          this.formattedTasks.forEach(task => {
+            task.remainingTime = this.calculateRemainingTime(new Date(task.due_date));
+          });
+        }, 60000);
+      },
+      getPriorityLabel(priority) {
+        switch (priority) {
+          case 1:
+            return 'Low';
+          case 2:
+            return 'Medium';
+          case 3:
+            return 'High';
+          default:
+            return 'Unknown';
+        }
+      }
     },
   };
   </script>

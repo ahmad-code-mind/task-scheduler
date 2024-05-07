@@ -17,6 +17,8 @@ return new class extends Migration
             $table->text('description');
             $table->dateTime('due_date');
             $table->integer('priority')->default(1);
+            $table->unsignedBigInteger('user_id');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

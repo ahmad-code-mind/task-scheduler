@@ -33,7 +33,7 @@
           <div class="w-full px-4">
             <div class="relative w-full mb-3">
               <label class="block uppercase text-blueGray-600 text-xs font-bold mb-2" for="due_date">Due Date</label>
-              <input type="datetime-local" :min="currentDateTime" v-model="getSelectedTask.due_date" id="title" name="title" :class="commonInputClass">
+              <input type="datetime-local" :min="currentDateTime" v-model="getSelectedTask.due_date" id="due_date" name="due_date" :class="commonInputClass">
               <form-error :validationErrors="getTaskValidationError" name="due_date" />
             </div>
           </div>
@@ -71,8 +71,8 @@
 <script>
 import { mapActions, mapGetters } from 'vuex'
 import { serializeForm } from '@/utils/SerializeForm';
-import Loader from '@/utils/Loader.vue';
-import FormError from '@/components/FormError.vue';
+import Loader from '@/Components/Loader.vue';
+import FormError from '@/Components/FormError.vue';
 import config from "@/config";
     
 export default {
@@ -91,15 +91,15 @@ export default {
   computed: {
     ...mapGetters(['getTaskValidationError', 'getSelectedTask']),
     isLoading() {
-      return this.$store.state.Task.isLoading;
+      return this.$store.state.isLoading;
     },
   },
   created() {
-    this.$store.dispatch('TaskCleanUp');
+    this.$store.dispatch('taskCleanUp');
   },
   mounted() {
-    const TaskId = this.$route.params.id;
-    this.$store.dispatch("getTask", { TaskId });
+    const taskId = this.$route.params.id;
+    this.$store.dispatch("getTask", { taskId });
   },
   methods: {
     ...mapActions(["updateTask"]),
@@ -108,7 +108,7 @@ export default {
             e.preventDefault();
             var data = serializeForm(this.$refs.updateTask);
             await this.updateTask(data);
-            const success = this.$store.state.Task.isSuccess;
+            const success = this.$store.state.isSuccess;
             if (success) {
                 this.$router.push({ name: "taskList" });
             }

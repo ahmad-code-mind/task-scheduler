@@ -5,6 +5,7 @@ namespace App\Repositories\Task;
 use App\Models\Task;
 use App\Repositories\Task\TaskRepositoryInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TaskRepository implements TaskRepositoryInterface
 {
@@ -21,22 +22,22 @@ class TaskRepository implements TaskRepositoryInterface
     {
         $tasks = $this->task->query();
 
+        $tasks->where('user_id', $this->request->user_id);
+
         if ($this->request->task_id) {
-            $task = $this->task->find($this->request->id);
+            $task = $this->task->find($this->request->task_id);
             return $task;
         }
 
         if ($this->request->search) {
-            $tasks->where('name', 'LIKE', '%' . $this->request->search . '%');
+            $tasks->where('title', 'LIKE', '%' . $this->request->search . '%');
         }
     
         if ($this->request->filter && $this->request->filter !== 'all') {
             $tasks->where('priority', $this->request->filter);
         }
-    
-        if ($this->request->due_date) {
-            $tasks->where('due_date', $this->request->due_date);
-        }
+
+        $tasks->orderBy('priority', 'desc');
 
         $total = $tasks->count();
 
@@ -54,22 +55,25 @@ class TaskRepository implements TaskRepositoryInterface
 
     public function store()
     {
+        $data = $this->request->all();
+        $data['user_id'] = $this->request->user_id;
         return $this->task->create($data);
     }
 
     public function update()
     {
-        $task = $this->task->find($id);
+        $data = $this->request->all();
+        $task = $this->task->find($data['id']);
         if ($task) {
             $task->update($data);
-            return $task;
         }
         return null;
     }
 
-    public function delete($id)
+    public function delete()
     {
-        $task = $this->task->find($id);
+        $data = $this->request->all();
+        $task = $this->task->find($data['id']);
         if ($task) {
             $task->delete();
             return true;

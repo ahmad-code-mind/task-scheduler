@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Repositories\Task\TaskRepositoryInterface;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
